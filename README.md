@@ -1,7 +1,7 @@
 Ryuanime_Downloader
 ========
 Quick and dirty script to download Anime from ryuanime.com . This script can download entire series or range of episodes.
-I haven't tested it properly. Try at your own risk. This script depends on the [aria2c](https://github.com/aria2/aria2).
+I haven't tested it properly. This is still in beta so things may break sometimes. Try at your own risk. This script depends on the [aria2c](https://github.com/aria2/aria2).
 Make sure to install all the dependencies before running the script.
 
 
