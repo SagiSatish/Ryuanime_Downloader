@@ -12,6 +12,7 @@ import re
 import os
 import jsbeautifier.unpackers.packer as packer
 from itertools import izip_longest
+import urllib
 
 base_url = "http://www.ryuanime.com"
 anime_name = ''
@@ -61,7 +62,7 @@ def episode_download(urls_list, start, end):
             soup = BeautifulSoup(res.content, 'html.parser')
             ep_iframe = soup.find("iframe", {'src': True, 'height': True, 'width': True})
             ep_iframe_url = ep_iframe['src']
-            ep_stream_url_re = r'https?://(?:www\.)?(?P<site_name>myvidstream|mp4upload)\.(?:net|com)/(?P<file_name>[^/?#&]+)'
+            ep_stream_url_re = r'https?://(?:www\.)?(?P<site_name>myvidstream|mp4upload|mp4engine)\.(?:net|com)/(?P<file_name>[^/?#&]+)'
             match = re.search(ep_stream_url_re, ep_iframe_url)
             if match:
                 stream_site_name = match.group('site_name')
@@ -85,6 +86,25 @@ def episode_download(urls_list, start, end):
                             break
                 elif stream_site_name == "mp4upload":
                     pass
+                elif stream_site_name == "mp4engine":
+                    res = make_request(ep_iframe_url)
+                    soup = BeautifulSoup(res.content, 'html.parser')
+                    player_div = soup.find('div', {'id': 'player_code'})
+                    for script_tag in player_div.find_all("script", {'type': 'text/javascript'}):
+                        if script_tag.text.startswith('eval'):
+                            unpacked_js = js_unpack(script_tag.text)
+                            for line in unpacked_js.replace('\\', '').split('flashplayer'):
+                                if line.startswith('jwplayer("flvplayer").setup({file:"'):
+                                    url = urllib.quote(
+                                        line.replace('jwplayer("flvplayer").setup({file:"', '').replace('",', ''),
+                                        safe=":/")
+                                    opfile_ext = url.split('.')[-1]
+                                    opfile = opfile_name + '.' + opfile_ext
+                                    final_dl_cmd = download_cmd.replace('##URL##', url).replace('##OPDIR##',
+                                                                                                args.output).replace(
+                                        '##OPFILE##', opfile)
+                                    os.system(final_dl_cmd)
+
             else:
                 print "Not supported streaming URL!!"
         else:
